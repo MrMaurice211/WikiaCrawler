@@ -32,7 +32,7 @@ public class WikiaCrawler {
 
 		long init = System.currentTimeMillis();
 		WikiaCrawler wc = new WikiaCrawler();
-		wc.root = new File("C:/Users/MrMaurice211/Desktop");
+		wc.root = new File(".");
 		wc.root = new File(wc.root, folder);
 
 		List<CompletableFuture<Void>> futures = new ArrayList<>();
@@ -47,7 +47,7 @@ public class WikiaCrawler {
 			e.printStackTrace();
 			return null;
 		});
-		print("Downloading " + futures.size() + " files");
+		print("Downloading " + futures.size() + " files on " + wc.root);
 		while (future != null && !future.isDone())
 			Thread.sleep(500);
 
