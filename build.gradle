@@ -1,0 +1,16 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+  compile group: 'org.jsoup', name: 'jsoup', version: '1.12.1'
+}
+
+application {
+    mainClassName = 'me.mrmaurice.wc.WikiaCrawler'
+}
