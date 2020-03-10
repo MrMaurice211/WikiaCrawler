@@ -1,99 +1,74 @@
 package me.mrmaurice.wc;
 
-import java.io.File;
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.net.URLConnection;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
+
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
+import me.mrmaurice.wc.function.ListPages;
+import me.mrmaurice.wc.function.export.ExportImages;
+import me.mrmaurice.wc.function.imports.ImportPages;
 
 public class WikiaCrawler {
-
-	private File root;
+	
+	public static Scanner scan;
 
 	public static void main(String[] args) throws Exception {
 
-		Scanner scan = new Scanner(System.in);
+		scan = new Scanner(System.in);
+		print("Select an option:");
+		print("a) Image Download");
+		print("b) Page List");
+		print("c) Import");
+		String option = scan.next();
 		print("Paste the url:");
 		String start = scan.next();
-		print("Paste the folder name:");
-		String folder = scan.next();
-		scan.close();
-
-		long init = System.currentTimeMillis();
-		WikiaCrawler wc = new WikiaCrawler();
-		wc.root = new File(".");
-		wc.root = new File(wc.root, folder);
-
-		List<CompletableFuture<Void>> futures = new ArrayList<>();
+		
 		if (!start.endsWith("/"))
 			start += "/";
-		start += "wiki/Special:Images";
-		print("Analyzing wiki at: " + start);
-		futures = wc.downloadFromGallery(start);
+		
+		ApiFunction func = null;
+		switch (option.toLowerCase()) {
+			case "a":
+			case "1":
+				print("You selected: Image Download.");
+				func = new ExportImages(start, "");
+				break;
+			case "b":
+			case "2":
+				print("You selected: Page List.");
+				func = new ListPages(start, "");
+				break;
+			case "c":
+			case "3":
+				print("You selected: Import.");
+				func = new ImportPages();
+				break;
+			default:
+				print("No option selected.");
+				break;
+		}
 
-		CompletableFuture<Void> future = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
-		future.exceptionally(e -> {
-			e.printStackTrace();
-			return null;
-		});
-		print("Downloading " + futures.size() + " files on " + wc.root);
-		while (future != null && !future.isDone())
-			Thread.sleep(500);
+		long init = System.currentTimeMillis();
+		print("Analyzing wiki at: " + start);
+		
+		if(func != null)
+			func.start();
 
 		print("Took " + TimeUnit.MILLISECONDS.toSeconds((System.currentTimeMillis() - init)) + "s");
-	}
-
-	public List<CompletableFuture<Void>> downloadFromGallery(String url) {
-		Document doc = connect(url);
-
-		List<CompletableFuture<Void>> futures = new ArrayList<>();
-		if (doc == null) {
-			print("Cant connect to the gallery " + url);
-			return futures;
-		}
-
-		Element nextPage = doc.selectFirst("a.paginator-next.button.secondary");
-		if (nextPage != null)
-			futures.addAll(downloadFromGallery(nextPage.attr("abs:href")));
-
-		Element src = doc.selectFirst("div#gallery-");
-		if (src == null)
-			return futures;
-
-		Elements imageList = src.select("div.wikia-gallery-item");
-
-		List<GalleryImage> imgs = new ArrayList<>();
-		for (Element galleryElement : imageList) {
-
-			Element image = galleryElement.child(0);
-			image = image.selectFirst("img");
-			String imgSrc = image.attr("abs:src");
-			String name = image.attr("data-image-key").replace(" ", "_");
-			
-			String category = null;
-			Element info = galleryElement.child(1);
-			Element post = info.selectFirst("a.wikia-gallery-item-posted");
-			if (post != null)
-				category = post.attr("title");
-
-			imgs.add(new GalleryImage(url, imgSrc, name, category, root));
-
-		}
-
-		futures.addAll(imgs.stream().map(GalleryImage::toFuture).collect(Collectors.toList()));
-
-		return futures;
+		scan.close();
 	}
 
 	public static void print(Object... list) {
@@ -108,7 +83,7 @@ public class WikiaCrawler {
 		print(map.toString());
 	}
 
-	private Document connect(String url) {
+	public static Document connect(String url) {
 		Document doc = null;
 		try {
 			doc = Jsoup.connect(url)
@@ -120,6 +95,24 @@ public class WikiaCrawler {
 		} catch (IOException e1) {
 			print("Error connecting to " + url);
 			e1.printStackTrace();
+			return null;
+		}
+	}
+	
+	public static JsonObject readUrl(String rawUrl) {
+		try {
+			URL url = new URL(rawUrl);
+			URLConnection con = url.openConnection();
+			con.setConnectTimeout(2000);
+			con.setReadTimeout(2000);
+
+			BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream()));
+			JsonObject obj = JsonParser.parseReader(in).getAsJsonObject();
+			
+			in.close();
+			return obj;
+		} catch (Exception e) {
+			print(rawUrl);
 			return null;
 		}
 	}

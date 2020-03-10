@@ -1,4 +1,4 @@
-package me.mrmaurice.wc;
+package me.mrmaurice.wc.objects;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -9,30 +9,24 @@ import javax.imageio.ImageIO;
 
 import static me.mrmaurice.wc.WikiaCrawler.print;
 
-public class GalleryImage {
+public class WikiaImage {
 
-	private String parentPage;
 	private String url;
 	private String name;
 	private String extension;
 	private File target;
 
-	public GalleryImage(String parentPage, String rawUrl, String dataKey, String category, File rootFolder) {
-		this.parentPage = parentPage;
-		this.name = dataKey.replace("amp%3B", "");
-
-		int urlIndex = rawUrl.indexOf(name);
-		this.url = urlIndex == -1 ? rawUrl : rawUrl.substring(0, urlIndex + name.length());
+	public WikiaImage(String rawUrl, String dataKey, File rootFolder) {
+		this.name = dataKey;
+		this.url = rawUrl;
 		
 		int index = name.lastIndexOf('.');
 		this.extension = index == -1 ? "" : name.substring(index + 1);
 
 		target = rootFolder;
-		if (category != null)
-			target = new File(target, category.replaceAll("[\\\\/:*?\"<>|]", ""));
 		if (!target.exists())
 			target.mkdirs();
-		target = new File(target, name);
+		target = new File(target, name.replaceAll("[\\\\/:*?\"<>|]", ""));
 	}
 
 	public CompletableFuture<Void> toFuture() {
@@ -43,13 +37,13 @@ public class GalleryImage {
 				BufferedImage image = ImageIO.read(new URL(url));
 
 				if (image == null) {
-					print("No image file was found at " + url + " at " + parentPage);
+					print("No image file was found at " + url);
 					return;
 				}
 
 				ImageIO.write(image, extension.isEmpty() ? "png" : extension, target);
 			} catch (Exception e) {
-				print("Error saving " + name + " from " + parentPage);
+				print("Error saving " + name + " from " + url);
 				e.printStackTrace();
 			}
 		});
