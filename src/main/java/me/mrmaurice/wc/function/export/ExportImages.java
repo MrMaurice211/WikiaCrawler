@@ -13,7 +13,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import me.mrmaurice.wc.ApiFunction;
-import me.mrmaurice.wc.WikiaCrawler;
 import me.mrmaurice.wc.objects.WikiaImage;
 
 import static me.mrmaurice.wc.WikiaCrawler.print;
@@ -34,11 +33,8 @@ public class ExportImages implements ApiFunction {
 	
 	public void start() {
 		
-		print("Write the folder name:");
-		String folder = WikiaCrawler.scan.next();
-		
 		root = new File(".");
-		root = new File(root, folder);
+		root = new File(root, "AllImages");
 
 		List<CompletableFuture<Void>> futures = downloadFromGallery();
 
@@ -54,7 +50,7 @@ public class ExportImages implements ApiFunction {
 			} catch (InterruptedException e1) {
 				e1.printStackTrace();
 			}
-		print("Exported to: " + root.toPath());
+		print("Exported to: " + root.toPath().toAbsolutePath());
 	}
 	
 	private List<CompletableFuture<Void>> downloadFromGallery() {

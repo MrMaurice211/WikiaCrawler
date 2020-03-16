@@ -44,7 +44,6 @@ public class WikiaImage {
 				ImageIO.write(image, extension.isEmpty() ? "png" : extension, target);
 			} catch (Exception e) {
 				print("Error saving " + name + " from " + url);
-				e.printStackTrace();
 			}
 		});
 	}
