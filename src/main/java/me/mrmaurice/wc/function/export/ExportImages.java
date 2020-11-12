@@ -62,8 +62,9 @@ public class ExportImages implements ApiFunction {
 			return futures;
 		}
 
-		if (json.has("query-continue")) {
-			String next = json.getAsJsonObject("query-continue").getAsJsonObject("allimages").get("aifrom").getAsString();
+		if (json.has("continue")) {
+			String next = json.getAsJsonObject("continue").get("aicontinue").getAsString();
+			next = next.substring(0, next.lastIndexOf('.'))
 			ExportImages other = new ExportImages(wiki, next);
 			other.root = root;
 			futures.addAll(other.downloadFromGallery());
